@@ -1,0 +1,25 @@
+.error-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  text-align: center;
+  
+  &__icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  &__title {
+    font-size: var(--font-size-xl);
+    color: var(--color-accent);
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  &__text {
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-lg);
+    max-width: 500px;
+  }
+}
