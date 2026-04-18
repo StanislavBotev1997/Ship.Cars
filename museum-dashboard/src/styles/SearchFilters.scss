@@ -1,5 +1,5 @@
 .search-filters {
-  background: white;
+  background: var(--color-bg);
   padding: var(--spacing-lg);
   border-radius: var(--radius-lg);
   box-shadow: 0 2px 8px var(--color-shadow);
@@ -29,6 +29,8 @@
       border-radius: var(--radius-md);
       font-size: var(--font-size-base);
       font-family: inherit;
+      background-color: var(--color-bg);
+      color: var(--color-text);
       transition: border-color var(--transition-fast);
       
       &:focus {
@@ -39,7 +41,6 @@
     
     select {
       cursor: pointer;
-      background-color: white;
     }
   }
   
@@ -53,11 +54,12 @@
   
   &__error {
     padding: var(--spacing-sm);
-    background-color: #fee;
+    background-color: var(--color-bg-light);
     color: var(--color-accent);
     border-radius: var(--radius-md);
     margin-bottom: var(--spacing-md);
     font-size: var(--font-size-sm);
+    border: 1px solid var(--color-accent);
   }
   
   &__actions {

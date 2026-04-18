@@ -1,210 +1,94 @@
 # Museum Intelligence Dashboard
 
-A production-quality React application for exploring The Metropolitan Museum of Art Collection.
-
-## Tech Stack
-
-- **React** (JavaScript)
-- **Redux Toolkit** - State management
-- **React Router** - Routing
-- **Sass (SCSS)** - Styling
-- **Vitest** - Testing
-- **Vite** - Build tool
+A React-based web application for exploring The Metropolitan Museum of Art Collection. Built as a technical assignment for Ship.Cars, this project demonstrates modern frontend development practices with a focus on performance, scalability, and user experience.
 
 ## Features
 
-### Feature A — Research Gallery (Discovery)
+- **Research Gallery** - Browse artworks with advanced filtering (keyword search, department, date range)
+- **Progressive Loading** - Efficient pagination with "Load More" functionality
+- **Artifact Detail View** - Comprehensive artwork information with high-resolution images
+- **Related Works** - Automated cross-referencing based on time period
+- **URL State Persistence** - Shareable URLs that preserve filter state
+- **Dark Mode** - Custom theme toggle for improved accessibility
+- **Error Handling** - Graceful fallbacks for missing data and API errors
+- **Responsive Design** - Optimized for desktop, tablet, and mobile devices
 
-- Gallery grid displaying artworks with:
-  - Primary image (primaryImageSmall)
-  - Title
-  - Artist name
-  - Object date
+## Tech Stack
 
-- **Filtering System:**
-  - Keyword search (q)
-  - Department filter (departmentId)
-  - Date range filter (dateBegin, dateEnd) supporting BCE and CE
-  - Multiple filters work simultaneously
+- **React** - UI library
+- **Redux Toolkit** - State management
+- **React Router** - Client-side routing
+- **Vite** - Build tool and dev server
+- **Sass (SCSS)** - Styling
+- **Vitest** - Testing framework
 
-- **Performance Optimizations:**
-  - Parallel fetching of object details
-  - Pagination/incremental loading (20 items per batch)
-  - Responsive UI during filtering
-  - Loading states and error handling
+## Getting Started
 
-- **State Persistence:**
-  - All filter state reflected in URL query params
-  - Page refresh restores filter state
+### Prerequisites
 
-### Feature B — Artifact Analysis (Detail View)
+- Node.js 20.19+ or 22.12+
+- npm or yarn
 
-- Displays comprehensive artwork information:
-  - High resolution image (primaryImage)
-  - Accession number
-  - Medium
-  - Dimensions
-  - Tags
-  - Credit line
-  - Artist bio
-  - Culture, period, dynasty (when available)
+### Installation
 
-- **Automated Cross-Referencing:**
-  - Shows related works based on:
-    - Same time period (±50 years of objectBeginDate/objectEndDate)
-  - Displays up to 6 related artworks
+```bash
+# Clone the repository
+git clone <repository-url>
 
-- **Data Integrity:**
-  - Handles missing images gracefully
-  - Provides fallbacks for missing metadata
-  - Handles inconsistent date formats
-  - Manages null values throughout
+# Navigate to project directory
+cd museum-dashboard
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+The application will be available at `http://localhost:5173`
+
+## Available Scripts
+
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build optimized production bundle
+- `npm run preview` - Preview production build locally
+- `npm test` - Run test suite with Vitest
+- `npm run lint` - Run ESLint for code quality checks
 
 ## Project Structure
 
 ```
 src/
-├── api/
-│   └── metMuseumApi.js          # API service layer
-├── store/
-│   ├── store.js                 # Redux store configuration
-│   └── slices/
-│       ├── artworksSlice.js     # Artworks list state
-│       ├── artworkDetailSlice.js # Artwork detail state
-│       ├── filtersSlice.js      # Filter state
-│       └── departmentsSlice.js  # Departments state
-├── components/
-│   ├── ArtworkCard.jsx          # Artwork card component
-│   ├── SearchFilters.jsx        # Search and filter component
-│   ├── LoadingSpinner.jsx       # Loading indicator
-│   └── ErrorMessage.jsx         # Error display component
-├── pages/
-│   ├── Gallery.jsx              # Main gallery page
-│   └── ArtworkDetail.jsx        # Artwork detail page
-├── styles/
-│   ├── index.scss               # Global styles
-│   ├── App.scss                 # App styles
-│   ├── Gallery.scss             # Gallery page styles
-│   ├── ArtworkCard.scss         # Artwork card styles
-│   ├── SearchFilters.scss       # Filter component styles
-│   ├── LoadingSpinner.scss      # Loading spinner styles
-│   ├── ErrorMessage.scss        # Error message styles
-│   └── ArtworkDetail.scss       # Detail page styles
-├── utils/
-│   └── dataTransformers.js      # Data transformation utilities
-├── tests/
-│   ├── setup.js                 # Test setup
-│   ├── api/                     # API tests
-│   ├── store/                   # Redux tests
-│   └── utils/                   # Utility tests
-├── App.jsx                      # Main app component
-└── main.jsx                     # App entry point
+├── api/                    # API service layer
+├── components/             # Reusable UI components
+├── pages/                  # Page-level components
+├── store/                  # Redux store and slices
+├── styles/                 # SCSS stylesheets
+├── utils/                  # Utility functions
+└── tests/                  # Test files
 ```
 
-## Installation
+## API
 
-**Note:** This project requires Node.js version 20.19+ or 22.12+. If you're using Node.js 20.16.0, you may encounter compatibility issues with the latest Vite version.
+This application uses the **Metropolitan Museum of Art Collection API**:
 
-### Option 1: Upgrade Node.js (Recommended)
+- Base URL: `https://collectionapi.metmuseum.org/public/collection/v1/`
+- Documentation: [Met Museum API](https://metmuseum.github.io/)
 
-```bash
-# Using nvm (Node Version Manager)
-nvm install 20.19.0
-nvm use 20.19.0
-```
+Key endpoints:
+- `/search` - Search for artwork IDs
+- `/objects/{objectID}` - Retrieve artwork details
+- `/departments` - List all museum departments
 
-### Option 2: Use Compatible Versions
+## Notes
 
-The project is configured to use Vite 5.4.11 which is compatible with Node.js 20.16.0.
+This project was built as part of the Ship.Cars technical interview process. The implementation emphasizes:
 
-```bash
-cd museum-dashboard
-npm install
-npm run dev
-```
-
-## Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm test` - Run tests
-- `npm run lint` - Run ESLint
-
-## API Documentation
-
-This application uses The Metropolitan Museum of Art Collection API:
-https://collectionapi.metmuseum.org/public/collection/v1/
-
-### Key Endpoints Used:
-
-- `GET /search` - Search for object IDs
-- `GET /objects/{objectID}` - Get object details
-- `GET /departments` - Get all departments
-
-## Architecture Highlights
-
-### Clean Code Principles
-
-- **Separation of Concerns:** API layer, state management, UI components are clearly separated
-- **Reusable Components:** All UI components are modular and reusable
-- **Type Safety:** Comprehensive data transformation with fallbacks
-- **Error Handling:** Graceful error handling throughout the application
-
-### Performance Optimizations
-
-- **Parallel Fetching:** Multiple artwork details fetched simultaneously
-- **Incremental Loading:** Load more functionality for better UX
-- **Image Lazy Loading:** Images load as they come into viewport
-- **Memoization:** Redux selectors prevent unnecessary re-renders
-
-### State Management
-
-- **Redux Toolkit:** Modern Redux with less boilerplate
-- **Async Thunks:** Handle all async operations
-- **Normalized State:** Efficient state structure
-- **URL Sync:** Filters synchronized with URL for shareability
-
-## Testing
-
-The project includes test setup for:
-
-- **Unit Tests:** Data transformation functions
-- **Integration Tests:** Redux slices and async thunks
-- **API Tests:** API service layer
-
-Run tests with:
-```bash
-npm test
-```
-
-## Responsive Design
-
-The application is fully responsive with breakpoints for:
-- Desktop (1400px+)
-- Tablet (768px - 1024px)
-- Mobile (< 768px)
-
-## Browser Support
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-
-## Future Enhancements
-
-- Add favorites/bookmarking functionality
-- Implement advanced search with more filters
-- Add artwork comparison feature
-- Export search results
-- Add user authentication
-- Implement virtual scrolling for large result sets
+- **Performance** - Parallel data fetching, incremental loading, and optimized rendering
+- **Scalability** - Modular architecture with clear separation of concerns
+- **Code Quality** - Clean code principles, comprehensive error handling, and maintainable structure
+- **User Experience** - Responsive design, loading states, and intuitive navigation
 
 ## License
 
 MIT
-
-## Author
-
-Built as a production-quality demonstration of modern React development practices.

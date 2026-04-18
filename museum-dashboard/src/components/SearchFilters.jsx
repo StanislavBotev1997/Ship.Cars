@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setAllFilters, resetFilters } from '../store/slices/filtersSlice';
-import { isValidDateRange, formatDateForDisplay } from '../utils/dataTransformers';
+import { validateDateFilters } from '../utils/dataTransformers';
 import '../styles/SearchFilters.scss';
 
 const SearchFilters = ({ onSearch }) => {
@@ -11,10 +11,6 @@ const SearchFilters = ({ onSearch }) => {
   
   const [localFilters, setLocalFilters] = useState(filters);
   const [dateError, setDateError] = useState('');
-  
-  useEffect(() => {
-    setLocalFilters(filters);
-  }, [filters]);
   
   const handleInputChange = (field, value) => {
     setLocalFilters(prev => ({
@@ -26,9 +22,10 @@ const SearchFilters = ({ onSearch }) => {
   const handleSearch = (e) => {
     e.preventDefault();
     
-    // Validate date range
-    if (!isValidDateRange(localFilters.dateBegin, localFilters.dateEnd)) {
-      setDateError('Start date must be before or equal to end date');
+    // Validate date filters (range and realistic bounds)
+    const validation = validateDateFilters(localFilters.dateBegin, localFilters.dateEnd);
+    if (!validation.isValid) {
+      setDateError(validation.error);
       return;
     }
     
@@ -40,19 +37,23 @@ const SearchFilters = ({ onSearch }) => {
   const handleReset = () => {
     setDateError('');
     dispatch(resetFilters());
-    setLocalFilters({
+    const resetParams = {
       q: '',
       departmentId: null,
       dateBegin: '',
       dateEnd: '',
-    });
-    onSearch({
-      q: '',
-      departmentId: null,
-      dateBegin: '',
-      dateEnd: '',
-    });
+    };
+    setLocalFilters(resetParams);
+    // Clear results by passing null to trigger empty state
+    onSearch(null);
   };
+  
+  // Check if search button should be disabled
+  const isSearchDisabled = 
+    !localFilters.q && 
+    !localFilters.departmentId && 
+    !localFilters.dateBegin && 
+    !localFilters.dateEnd;
   
   return (
     <form className="search-filters" onSubmit={handleSearch}>
@@ -124,7 +125,11 @@ const SearchFilters = ({ onSearch }) => {
       )}
       
       <div className="search-filters__actions">
-        <button type="submit" className="btn btn--primary">
+        <button 
+          type="submit" 
+          className="btn btn--primary"
+          disabled={isSearchDisabled}
+        >
           Search
         </button>
         <button type="button" className="btn btn--secondary" onClick={handleReset}>

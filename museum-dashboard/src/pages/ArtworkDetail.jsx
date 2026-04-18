@@ -12,7 +12,7 @@ const ArtworkDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   
-  const { artwork, relatedArtworks, loading, loadingRelated, error } = useSelector(
+  const { artwork, relatedArtworks, loading, loadingRelated, error, relatedAttempted } = useSelector(
     (state) => state.artworkDetail
   );
   
@@ -27,10 +27,10 @@ const ArtworkDetail = () => {
   }, [dispatch, id]);
   
   useEffect(() => {
-    if (artwork && !loadingRelated && relatedArtworks.length === 0) {
+    if (artwork && !loadingRelated && !relatedAttempted) {
       dispatch(fetchRelatedArtworks());
     }
-  }, [artwork, dispatch, loadingRelated, relatedArtworks.length]);
+  }, [artwork, dispatch, loadingRelated, relatedAttempted]);
   
   const handleRetry = () => {
     dispatch(fetchArtworkDetail(parseInt(id, 10)));

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
-import { searchAndFetchArtworks, loadMoreArtworks } from '../store/slices/artworksSlice';
+import { searchAndFetchArtworks, loadMoreArtworks, clearArtworks } from '../store/slices/artworksSlice';
 import { setAllFilters } from '../store/slices/filtersSlice';
 import { fetchDepartments } from '../store/slices/departmentsSlice';
 import { buildQueryParamsFromURL, buildURLFromQueryParams } from '../utils/dataTransformers';
@@ -30,16 +30,28 @@ const Gallery = () => {
   useEffect(() => {
     const urlParams = buildQueryParamsFromURL(searchParams);
     if (Object.keys(urlParams).length > 0) {
-      dispatch(setAllFilters(urlParams));
-      dispatch(searchAndFetchArtworks(urlParams));
+      // Ensure we have a query string for the API (required parameter)
+      const searchFilters = {
+        q: urlParams.q || '', // Empty string if no query provided
+        ...urlParams
+      };
+      dispatch(setAllFilters(searchFilters));
+      dispatch(searchAndFetchArtworks(searchFilters));
     } else {
-      // Default search to show some artworks
-      const defaultParams = { q: 'sunflowers' };
+      // Default search to show a broad collection of artworks
+      const defaultParams = { q: 'art' };
       dispatch(searchAndFetchArtworks(defaultParams));
     }
   }, []); // Only run on mount
   
   const handleSearch = (searchFilters) => {
+    // Handle reset (null means clear results)
+    if (searchFilters === null) {
+      setSearchParams({});
+      dispatch(clearArtworks());
+      return;
+    }
+    
     // Update URL with new filters
     const newSearchParams = buildURLFromQueryParams(searchFilters);
     setSearchParams(newSearchParams);
@@ -49,7 +61,10 @@ const Gallery = () => {
   };
   
   const handleLoadMore = () => {
-    dispatch(loadMoreArtworks());
+    // Prevent loading more if already loading
+    if (!loading && !loadingMore) {
+      dispatch(loadMoreArtworks());
+    }
   };
   
   const handleRetry = () => {
@@ -77,7 +92,8 @@ const Gallery = () => {
       
       {!loading && !error && artworks.length === 0 && (
         <div className="gallery__empty">
-          <p>No artworks found. Try adjusting your search filters.</p>
+          <h2>Start exploring the collection</h2>
+          <p>Use filters or keywords to begin your search</p>
         </div>
       )}
       
@@ -100,7 +116,7 @@ const Gallery = () => {
               <button
                 className="btn btn--primary"
                 onClick={handleLoadMore}
-                disabled={loadingMore}
+                disabled={loading || loadingMore}
               >
                 {loadingMore ? 'Loading...' : 'Load More'}
               </button>

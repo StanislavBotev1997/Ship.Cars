@@ -11,7 +11,7 @@
     display: inline-flex;
     align-items: center;
     padding: var(--spacing-xs) var(--spacing-md);
-    background: white;
+    background: var(--color-bg);
     border-radius: var(--radius-md);
     box-shadow: 0 2px 4px var(--color-shadow);
     transition: all var(--transition-base);
@@ -26,7 +26,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--spacing-xl);
-    background: white;
+    background: var(--color-bg);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     box-shadow: 0 2px 8px var(--color-shadow);
@@ -121,7 +121,7 @@
     transition: color var(--transition-fast);
     
     &:hover {
-      color: darken(#3498db, 10%);
+      opacity: 0.8;
     }
   }
   

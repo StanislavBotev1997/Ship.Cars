@@ -11,6 +11,12 @@
 export const transformArtwork = (artwork) => {
   if (!artwork) return null;
   
+  // Filter out artworks without images (client-side filtering)
+  // This is needed because hasImages parameter causes CORS errors in the API
+  if (!artwork.primaryImageSmall && !artwork.primaryImage) {
+    return null;
+  }
+  
   return {
     objectID: artwork.objectID,
     title: artwork.title || 'Untitled',
@@ -107,6 +113,54 @@ export const isValidDateRange = (dateBegin, dateEnd) => {
   if (dateEnd === null || dateEnd === undefined || dateEnd === '') return true;
   
   return Number(dateBegin) <= Number(dateEnd);
+};
+
+/**
+ * Validate that a date is within realistic bounds
+ * @param {number} date - Date to validate
+ * @returns {boolean} - True if date is realistic
+ */
+export const isRealisticDate = (date) => {
+  if (date === null || date === undefined || date === '') return true;
+  
+  const numDate = Number(date);
+  const currentYear = new Date().getFullYear();
+  
+  // Allow dates from 10000 BCE to current year + 100 (for future dates in some collections)
+  return numDate >= -10000 && numDate <= currentYear + 100;
+};
+
+/**
+ * Validate date filters (both range and realistic bounds)
+ * @param {number} dateBegin - Start date
+ * @param {number} dateEnd - End date
+ * @returns {Object} - Object with isValid boolean and error message
+ */
+export const validateDateFilters = (dateBegin, dateEnd) => {
+  // Check if dates are realistic
+  if (!isRealisticDate(dateBegin)) {
+    return {
+      isValid: false,
+      error: 'Start date must be between 10000 BCE and the present (use negative numbers for BCE, e.g., -500)'
+    };
+  }
+  
+  if (!isRealisticDate(dateEnd)) {
+    return {
+      isValid: false,
+      error: 'End date must be between 10000 BCE and the present (use negative numbers for BCE, e.g., -500)'
+    };
+  }
+  
+  // Check if range is valid
+  if (!isValidDateRange(dateBegin, dateEnd)) {
+    return {
+      isValid: false,
+      error: 'Start date must be before or equal to end date'
+    };
+  }
+  
+  return { isValid: true, error: '' };
 };
 
 /**

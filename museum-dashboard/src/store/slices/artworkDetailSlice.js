@@ -60,6 +60,7 @@ const initialState = {
   loadingRelated: false,
   error: null,
   relatedError: null,
+  relatedAttempted: false, // Track if we've tried to fetch related artworks
 };
 
 const artworkDetailSlice = createSlice({
@@ -71,6 +72,7 @@ const artworkDetailSlice = createSlice({
       state.relatedArtworks = [];
       state.error = null;
       state.relatedError = null;
+      state.relatedAttempted = false;
     },
   },
   extraReducers: (builder) => {
@@ -92,6 +94,7 @@ const artworkDetailSlice = createSlice({
       .addCase(fetchRelatedArtworks.pending, (state) => {
         state.loadingRelated = true;
         state.relatedError = null;
+        state.relatedAttempted = true;
       })
       .addCase(fetchRelatedArtworks.fulfilled, (state, action) => {
         state.loadingRelated = false;
@@ -100,6 +103,7 @@ const artworkDetailSlice = createSlice({
       .addCase(fetchRelatedArtworks.rejected, (state, action) => {
         state.loadingRelated = false;
         state.relatedError = action.payload;
+        // Don't retry - we've attempted once
       });
   },
 });

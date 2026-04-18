@@ -3,23 +3,40 @@
  * API Documentation: https://collectionapi.metmuseum.org/public/collection/v1/
  */
 
+import { cache } from '../utils/cache';
+
 const BASE_URL = 'https://collectionapi.metmuseum.org/public/collection/v1';
 
+// Retry configuration
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 500; // ms
+
 /**
- * Search for object IDs based on query parameters
+ * Delay helper
+ */
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Search for object IDs based on query parameters with retry logic
  * @param {Object} params - Search parameters
  * @param {string} params.q - Search query
  * @param {number} params.departmentId - Department ID
  * @param {number} params.dateBegin - Start date (can be negative for BCE)
  * @param {number} params.dateEnd - End date (can be negative for BCE)
+ * @param {number} retryCount - Current retry attempt
  * @returns {Promise<Object>} - Object containing total count and objectIDs array
  */
-export const searchObjects = async (params = {}) => {
+export const searchObjects = async (params = {}, retryCount = 0) => {
   try {
     const queryParams = new URLSearchParams();
     
     // Add query parameter (required by API, use empty string if not provided)
     queryParams.append('q', params.q || '');
+    
+    // NOTE: hasImages parameter causes CORS 403 Forbidden error in browser
+    // The Met Museum API blocks this parameter from browser requests
+    // We filter images client-side in transformArtwork instead
+    // queryParams.append('hasImages', 'true');
     
     // Add optional filters
     if (params.departmentId) {
@@ -43,18 +60,44 @@ export const searchObjects = async (params = {}) => {
     const data = await response.json();
     return data;
   } catch (error) {
+    // Retry logic for rate limit errors
+    const isRateLimitError = 
+      error.message.includes('403') || 
+      error.message.includes('Failed to fetch');
+    
+    if (isRateLimitError && retryCount < MAX_RETRIES) {
+      const backoffDelay = RETRY_DELAY * Math.pow(2, retryCount);
+      console.warn(`Retrying search in ${backoffDelay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+      
+      await delay(backoffDelay);
+      return searchObjects(params, retryCount + 1);
+    }
+    
     console.error('Error searching objects:', error);
     throw error;
   }
 };
 
 /**
- * Fetch object details by ID
+ * Fetch object details by ID with caching and retry logic
  * @param {number} objectId - The object ID
+ * @param {boolean} useCache - Whether to use cache (default: true)
+ * @param {number} retryCount - Current retry attempt
  * @returns {Promise<Object>} - Object details
  */
-export const getObjectById = async (objectId) => {
+export const getObjectById = async (objectId, useCache = true, retryCount = 0) => {
   try {
+    // Check cache first
+    if (useCache) {
+      const cacheKey = cache.getArtworkKey(objectId);
+      const cached = cache.get(cacheKey);
+      
+      if (cached) {
+        return cached;
+      }
+    }
+    
+    // Fetch from API
     const response = await fetch(`${BASE_URL}/objects/${objectId}`);
     
     if (!response.ok) {
@@ -62,34 +105,68 @@ export const getObjectById = async (objectId) => {
     }
     
     const data = await response.json();
+    
+    // Cache the result
+    if (useCache) {
+      const cacheKey = cache.getArtworkKey(objectId);
+      cache.set(cacheKey, data);
+    }
+    
     return data;
   } catch (error) {
+    // Retry logic for rate limit errors
+    const isRateLimitError = 
+      error.message.includes('403') || 
+      error.message.includes('Failed to fetch');
+    
+    if (isRateLimitError && retryCount < MAX_RETRIES) {
+      const backoffDelay = RETRY_DELAY * Math.pow(2, retryCount);
+      console.warn(`Retrying object ${objectId} in ${backoffDelay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+      
+      await delay(backoffDelay);
+      return getObjectById(objectId, useCache, retryCount + 1);
+    }
+    
     console.error(`Error fetching object ${objectId}:`, error);
     throw error;
   }
 };
 
 /**
- * Fetch multiple objects in parallel with error handling
+ * Fetch multiple objects with parallel batching and error handling
  * @param {number[]} objectIds - Array of object IDs
  * @param {number} limit - Maximum number of objects to fetch
+ * @param {number} batchSize - Number of objects to fetch in parallel per batch
+ * @param {number} batchDelay - Delay between batches in ms
  * @returns {Promise<Object[]>} - Array of object details (excluding failed fetches)
  */
-export const getMultipleObjects = async (objectIds, limit = 20) => {
+export const getMultipleObjects = async (objectIds, limit = 20, batchSize = 12, batchDelay = 100) => {
   try {
     const idsToFetch = objectIds.slice(0, limit);
+    const results = [];
     
-    const promises = idsToFetch.map(id => 
-      getObjectById(id).catch(error => {
-        console.warn(`Failed to fetch object ${id}:`, error);
-        return null; // Return null for failed fetches
-      })
-    );
+    // Process in batches with parallel requests within each batch
+    for (let i = 0; i < idsToFetch.length; i += batchSize) {
+      const batch = idsToFetch.slice(i, i + batchSize);
+      
+      // Fetch all items in this batch in parallel
+      const promises = batch.map(id => 
+        getObjectById(id).catch(error => {
+          console.warn(`Failed to fetch object ${id}:`, error);
+          return null; // Return null for failed fetches
+        })
+      );
+      
+      const batchResults = await Promise.all(promises);
+      results.push(...batchResults.filter(obj => obj !== null));
+      
+      // Add small delay between batches to avoid rate limiting
+      if (i + batchSize < idsToFetch.length) {
+        await delay(batchDelay);
+      }
+    }
     
-    const results = await Promise.all(promises);
-    
-    // Filter out null values (failed fetches)
-    return results.filter(obj => obj !== null);
+    return results;
   } catch (error) {
     console.error('Error fetching multiple objects:', error);
     throw error;
